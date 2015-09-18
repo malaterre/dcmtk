@@ -1,0 +1,23 @@
+language: cpp
+sudo: false
+os:
+  - linux
+  - osx
+compiler:
+  - clang
+  - gcc
+matrix:
+  exclude:
+    - os: osx
+    - compiler: gcc
+
+before_install:
+  - cmake --version
+
+script:
+  - mkdir build
+  - cd build
+  - cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE:STRING=None -DBUILD_SHARED_LIBS:BOOL=ON -DDCMTK_WITH_OPENSSL:BOOL=OFF -DDCMTK_WITH_PRIVATE_TAGS:BOOL=ON -DDCMTK_WITH_XML:BOOL=ON -DDCMTK_WITH_DOXYGEN:BOOL=OFF -DDCMTK_WITH_TIFF:BOOL=OFF -DDCMTK_WITH_ZLIB:BOOL=OFF -DDCMTK_WITH_ICONV:BOOL=OFF -DUSE_COMPILER_HIDDEN_VISIBILITY:BOOL=ON -DCMAKE_VERBOSE_MAKEFILE=ON -DDCMTK_INSTALL_DATDIC:STRING=share/libdcmtk4 -DCMAKE_SKIP_RPATH:BOOL=OFF ..
+  - ctest -D ExperimentalStart
+  - ctest -D ExperimentalBuild -V
+  - ctest -D ExperimentalTest -j2 || true
