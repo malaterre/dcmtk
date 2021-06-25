@@ -102,7 +102,8 @@ public:
     Uint32& startFragment,
     void *buffer,
     Uint32 bufSize,
-    OFString& decompressedColorModel) const;
+    OFString& decompressedColorModel,
+    OFBool& isFrameLossless) const;
 
   /** compresses the given uncompressed DICOM image and stores
    *  the result in the given pixSeq element.
@@ -237,7 +238,8 @@ private:
     Uint16 imageColumns,
     Uint16 imageRows,
     Uint16 imageSamplesPerPixel,
-    Uint16 bytesPerSample);
+    Uint16 bytesPerSample,
+    OFBool& isFrameLossless);
 
   /** determines if a given image requires color-by-plane planar configuration
    *  depending on SOP Class UID (DICOM IOD) and photometric interpretation.

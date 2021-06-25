@@ -186,12 +186,15 @@ OFCondition DJ2KDecoderBase::decode(
   OFBool done = OFFalse;
   OFBool forceSingleFragmentPerFrame = djcp->getForceSingleFragmentPerFrame();
 
+  OFBool isLossless = true;
   while (result.good() && !done)
   {
-      DCMJ2K_DEBUG("JPEG-LS decoder processes frame " << (currentFrame+1));
+      DCMJ2K_DEBUG("JPEG-2000 decoder processes frame " << (currentFrame+1));
 
+      OFBool isFrameLossless = true;
       result = decodeFrame(pixSeq, djcp, dataset, currentFrame, currentItem, pixeldata8, frameSize,
-          imageFrames, imageColumns, imageRows, imageSamplesPerPixel, imagePixelRepresentation, bytesPerSample);
+          imageFrames, imageColumns, imageRows, imageSamplesPerPixel, imagePixelRepresentation, bytesPerSample, isFrameLossless);
+      isLossless = isLossless && isFrameLossless;
 
       // check if we should enforce "one fragment per frame" while
       // decompressing a multi-frame image even if stream suspension occurs
@@ -199,7 +202,7 @@ OFCondition DJ2KDecoderBase::decode(
       {
         // frame is incomplete. Nevertheless skip to next frame.
         // This permits decompression of faulty multi-frame images.
-        DCMJ2K_WARN("JPEG-LS bitstream invalid or incomplete, ignoring (but image is likely to be incomplete).");
+        DCMJ2K_WARN("JPEG-2000 bitstream invalid or incomplete, ignoring (but image is likely to be incomplete).");
         result = EC_Normal;
       }
 
@@ -234,7 +237,7 @@ OFCondition DJ2KDecoderBase::decode(
     }
 
     // set Lossy Image Compression to "01" (see DICOM part 3, C.7.6.1.1.5)
-    if (result.good() && (supportedTransferSyntax() == EXS_JPEG2000)) result = ditem->putAndInsertString(DCM_LossyImageCompression, "01");
+    if (result.good() && (supportedTransferSyntax() == EXS_JPEG2000) && !isLossless) result = ditem->putAndInsertString(DCM_LossyImageCompression, "01");
 
   }
 
@@ -251,7 +254,8 @@ OFCondition DJ2KDecoderBase::decodeFrame(
     Uint32& currentItem,
     void * buffer,
     Uint32 bufSize,
-    OFString& decompressedColorModel) const
+    OFString& decompressedColorModel,
+    OFBool& isFrameLossless) const
 {
   OFCondition result = EC_Normal;
 
@@ -312,7 +316,7 @@ OFCondition DJ2KDecoderBase::decodeFrame(
     // We got all the data we need from the dataset, let's start decoding
     DCMJ2K_DEBUG("Starting to decode frame " << frameNo << " with fragment " << currentItem);
     result = decodeFrame(fromPixSeq, djcp, dataset, frameNo, currentItem, buffer, bufSize,
-        imageFrames, imageColumns, imageRows, imageSamplesPerPixel, imagePixelRepresentation, bytesPerSample);
+        imageFrames, imageColumns, imageRows, imageSamplesPerPixel, imagePixelRepresentation, bytesPerSample, isFrameLossless);
   }
 
   if (result.good())
@@ -469,7 +473,8 @@ OFCondition DJ2KDecoderBase::decodeFrame(
     Uint16 imageRows,
     Uint16 imageSamplesPerPixel,
     Uint16 imagePixelRepresentation,
-    Uint16 bytesPerSample)
+    Uint16 bytesPerSample,
+    OFBool& isFrameLossless)
 {
   DcmPixelItem *pixItem = NULL;
   Uint8 * j2kData = NULL;
@@ -635,6 +640,7 @@ opj_image_t *image = nullptr;
       // discrete wavelet transform identifier: 0 = 9-7 irreversible, 1 = 5-3 reversible 
       OPJ_UINT32 qmfbid = tccp_info->qmfbid;
       // FIXME do something with mct/qmfbid
+      isFrameLossless = qmfbid == 1;
       opj_destroy_cstr_info(&d);
     }
 

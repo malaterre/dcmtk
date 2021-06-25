@@ -140,7 +140,8 @@ public:
     Uint32& startFragment,
     void *buffer,
     Uint32 bufSize,
-    OFString& decompressedColorModel) const = 0;
+    OFString& decompressedColorModel,
+    OFBool& isFrameLossless) const = 0;
 
   /** compresses the given uncompressed DICOM image and stores
    *  the result in the given pixSeq element.
@@ -409,7 +410,8 @@ public:
     Uint32& startFragment,
     void *buffer,
     Uint32 bufSize,
-    OFString& decompressedColorModel);
+    OFString& decompressedColorModel,
+    OFBool& isFrameLossless);
 
   /** looks for a codec that is able to encode from the given transfer syntax
    *  and calls the encode() method of the codec.  A read lock on the list of

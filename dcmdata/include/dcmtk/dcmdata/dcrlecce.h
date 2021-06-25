@@ -97,7 +97,8 @@ public:
     Uint32& startFragment,
     void *buffer,
     Uint32 bufSize,
-    OFString& decompressedColorModel) const;
+    OFString& decompressedColorModel,
+    OFBool& isFrameLossless) const;
 
   /** compresses the given uncompressed DICOM image and stores
    *  the result in the given pixSeq element.
